@@ -1,8 +1,8 @@
-const { MongoClient, ObjectId, Collection } = require("mongodb");
+const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
 
-async function optica() {
+async function pizzeria() {
   try {
     await client.connect();
     console.log("Conexión establecida correctamente");
@@ -217,4 +217,5 @@ async function optica() {
     await client.close();
   }
 }
-optica().catch(console.dir);
+
+pizzeria().catch(console.dir);
