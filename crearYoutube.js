@@ -16,8 +16,6 @@ async function youtube() {
         const comentaris = database.collection("comentaris");
         const suscripcions = database.collection("suscripcions");
 
-        //los likes y dislikes guardarlos en el mismo documento, no hace falta hacer una coleccion
-
         // ------------------------------ Canal ---------------------------//
         console.log(">>>>>>>>>>Canal<<<<<<<<<<<");
 
