@@ -14,7 +14,6 @@ async function youtube() {
         const canals = database.collection("canals");
         const playlists = database.collection("playlists");
         const comentaris = database.collection("comentaris");
-        const suscripcions = database.collection("suscripcions");
 
         // ------------------------------ Canal ---------------------------//
         console.log(">>>>>>>>>>Canal<<<<<<<<<<<");

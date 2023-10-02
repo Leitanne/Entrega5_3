@@ -1,4 +1,4 @@
-const { MongoClient, ObjectId } = require("mongodb");
+const { MongoClient } = require("mongodb");
 const uri = "mongodb://127.0.0.1:27017";
 const client = new MongoClient(uri);
 
@@ -145,7 +145,10 @@ async function spotify() {
                 bsonType: 'date'
               },
               total: {
-                bsonType: 'decimal'
+                bsonType: 'double'
+              },
+              metode: {
+                bsonType: 'objectId'
               }
             }
           }
@@ -263,7 +266,7 @@ async function spotify() {
         validator: {
           $jsonSchema: {
             bsonType: 'object',
-            required: ['nom', 'imatge'],
+            required: ['nom'],
             properties: {
               nom: {
                 bsonType: 'string'
@@ -287,7 +290,7 @@ async function spotify() {
       const playlists = database.collection("playlists");
       const cancons = database.collection("cancons");
       const albums = database.collection("albums");
-      const artista = database.collection("artista");
+      const artistes = database.collection("artistes");
       
       // ------------------------------ Inserció de dades ---------------------------//
       // ------------------------------ Paypal ---------------------------//
@@ -323,11 +326,9 @@ async function spotify() {
       
       const targetaResult = await targetesDeCredit.insertOne(targeta);
       let targetaId = targetaResult.insertedId;
-      console.log(`${targetaResult.insertedCount} documents s'han insertat.`);
+      console.log(`1 document s'ha insertat.`);
+      console.log(`S'ha insertat un document amb id: ${targetaId}`);
 
-      for (let id of Object.values(targetaId)) {
-          console.log(`S'ha insertat un document amb id: ${id}`);
-      }
 
       // ------------------------------ Pagaments ---------------------------//
       console.log(">>>>>>>>>>Pagaments<<<<<<<<<<<");
@@ -390,6 +391,99 @@ async function spotify() {
           console.log(`S'ha insertat un document amb id: ${id}`);
       }
 
+      // ------------------------------ Artistes ---------------------------//
+      console.log(">>>>>>>>>>Artistes<<<<<<<<<<<");
+
+      const artista1 = {
+        nom: 'Artist 1',
+      };
+
+      const artista2 = {
+        nom: 'Artist 2',
+      };
+
+      const artistesResult = await artistes.insertMany([artista1, artista2]);
+      let artistesIds = artistesResult.insertedIds;
+      console.log(`${artistesResult.insertedCount} documents s'han insertat.`);
+
+      for (let id of Object.values(artistesIds)) {
+          console.log(`S'ha insertat un document amb id: ${id}`);
+      }
+
+      await artistes.updateOne(
+        { _id: artista2._id},
+        { $set: { artistes_relacionats: [artistesIds[0]]} }
+      );
+
+      // ------------------------------ Albums ---------------------------//
+      console.log(">>>>>>>>>>Albums<<<<<<<<<<<");
+
+      const album1 = {
+        titol: 'Album 1',
+        any_publicacio: new Date('2023-01-10'),
+        artista: artistesIds[0],
+      };
+
+      const album2 = {
+        titol: 'Album 2',
+        any_publicacio: new Date('2023-02-15'),
+        artista: artistesIds[1],
+      };
+
+      const albumsResult = await albums.insertMany([album1, album2]);
+      let albumsIds = albumsResult.insertedIds;
+      console.log(`${albumsResult.insertedCount} documents s'han insertat.`);
+
+      for (let id of Object.values(albumsIds)) {
+          console.log(`S'ha insertat un document amb id: ${id}`);
+      }
+
+      // ------------------------------ Cançons ----------------------------//
+      console.log(">>>>>>>>>>Cançons<<<<<<<<<<<");
+
+      const canco1 = {
+        titol: 'Song 1',
+        durada: 240, 
+        reproduccions: 1000,
+        album: albumsIds[0],
+      };
+
+      const canco2 = {
+        titol: 'Song 2',
+        durada: 180, 
+        reproduccions: 800,
+        album: albumsIds[1],
+      };
+
+      const canco3 = {
+        titol: 'Song 3',
+        durada: 300, 
+        reproduccions: 1200,
+        album: albumsIds[0],
+      };
+
+      const canco4 = {
+        titol: 'Song 4',
+        durada: 210, 
+        reproduccions: 600,
+        album: albumsIds[1],
+      };
+      
+      const canco5 = {
+        titol: 'Song 5',
+        durada: 270, 
+        reproduccions: 1500,
+        album: albumsIds[0],
+      };
+
+      const canconsResult = await cancons.insertMany([canco1, canco2, canco3, canco4, canco5]);
+      let canconsIds = canconsResult.insertedIds;
+      console.log(`${canconsResult.insertedCount} documents s'han insertat.`);
+
+      for (let id of Object.values(canconsIds)) {
+          console.log(`S'ha insertat un document amb id: ${id}`);
+      }
+
       // ------------------------------ Usuaris ---------------------------//
       console.log(">>>>>>>>>>Usuaris<<<<<<<<<<<");
 
@@ -403,9 +497,9 @@ async function spotify() {
       pais: 'United Kingdom',
       codi_postal: 'SW1A 1AA',
       suscripcio: subscripcionsIds[0],
-      artistes_seguits: [],
-      albums_preferits: [],
-      cancons_preferides: [],
+      artistes_seguits: [artistesIds[0]],
+      albums_preferits: [albumsIds[0]],
+      cancons_preferides: [canconsIds[0], canconsIds[3], canconsIds[4]],
       };
 
       const usuari2 = {
@@ -417,9 +511,9 @@ async function spotify() {
         sexe: 'male',
         pais: 'Australia',
         codi_postal: '2000',
-        artistes_seguits: [],
-        albums_preferits: [],
-        cancons_preferides: [],
+        artistes_seguits: [artistesIds[1]],
+        albums_preferits: [albumsIds[1]],
+        cancons_preferides: [canconsIds[1], canconsIds[3]],
       };
 
       const usuari3 = {
@@ -432,9 +526,8 @@ async function spotify() {
         pais: 'Canada',
         codi_postal: 'M5H 2N2',
         suscripcio: subscripcionsIds[1],
-        artistes_seguits: [],
-        albums_preferits: [],
-        cancons_preferides: [],
+        albums_preferits: [albumsIds[0], albumsIds[1]],
+        cancons_preferides: [canconsIds[0], canconsIds[1], canconsIds[3], canconsIds[4]],
       };
 
       const usuari4 = {
@@ -446,9 +539,9 @@ async function spotify() {
         sexe: 'male',
         pais: 'United States',
         codi_postal: '10001',
-        artistes_seguits: [],
-        albums_preferits: [],
-        cancons_preferides: [],
+        artistes_seguits: [artistesIds[0]],
+        albums_preferits: [albumsIds[1]],
+        cancons_preferides: [canconsIds[1], canconsIds[4]],
       };
 
       const usuari5 = {
@@ -461,10 +554,17 @@ async function spotify() {
         pais: 'United Kingdom',
         codi_postal: 'SW1A 2AA',
         suscripcio: subscripcionsIds[2],
-        artistes_seguits: [],
-        albums_preferits: [],
-        cancons_preferides: [],
+        albums_preferits: [albumsIds[0]],
+        cancons_preferides: [canconsIds[0]],
       };
+
+      const usuarisResult = await usuaris.insertMany([usuari1, usuari2,  usuari3, usuari4, usuari5]);
+      let usuarisIds = usuarisResult.insertedIds;
+      console.log(`${usuarisResult.insertedCount} documents s'han insertat.`);
+
+      for (let id of Object.values(usuarisIds)) {
+          console.log(`S'ha insertat un document amb id: ${id}`);
+      }
 
       // ------------------------------ Playlists ---------------------------//
       console.log(">>>>>>>>>>Playlists<<<<<<<<<<<");
@@ -474,17 +574,16 @@ async function spotify() {
         numero_cancons: 8,
         data_creacio: new Date('2023-02-20'),
         eliminada: false,
-        data_eliminada: null,
         propietari: usuarisIds[0],
         compartit_amb: [usuarisIds[4]],
         llista_cancons: [
           {
-            canco: ,
+            canco: canconsIds[0],
             usuari: usuarisIds[4],
             data: new Date('2023-02-21'),
           },
           {
-            canco: ,
+            canco: canconsIds[3],
             usuari: usuarisIds[0],
             data: new Date('2023-02-22'),
           },
@@ -496,17 +595,16 @@ async function spotify() {
         numero_cancons: 12,
         data_creacio: new Date('2023-04-05'),
         eliminada: false,
-        data_eliminada: null,
         propietari: usuarisIds[1],
         compartit_amb: [usuarisIds[0], usuarisIds[2], usuarisIds[3]],
         llista_cancons: [
           {
-            canco: ,
+            canco: canconsIds[3],
             usuari: usuarisIds[2],
             data: new Date('2023-04-06'),
           },
           {
-            canco: ,
+            canco: canconsIds[1],
             usuari: usuarisIds[3],
             data: new Date('2023-04-07'),
           },
@@ -518,22 +616,29 @@ async function spotify() {
         numero_cancons: 10,
         data_creacio: new Date('2023-01-15'),
         eliminada: false,
-        data_eliminada: null,
         propietari: usuarisIds[2],
         compartit_amb: [usuarisIds[0], usuarisIds[1]],
         llista_cancons: [
           {
-            canco: ,
+            canco: canconsIds[0],
             usuari: usuarisIds[1],
             data: new Date('2023-01-16'),
           },
           {
-            canco: ,
+            canco: canconsIds[0],
             usuari: usuarisIds[2],
             data: new Date('2023-01-17'),
           },
         ],
       };
+
+      const playlistsResult = await playlists.insertMany([playlist1, playlist2, playlist3]);
+      let playlistsIds = playlistsResult.insertedIds;
+      console.log(`${playlistsResult.insertedCount} documents s'han insertat.`);
+
+      for (let id of Object.values(playlistsIds)) {
+          console.log(`S'ha insertat un document amb id: ${id}`);
+      }
 
     } finally {
         // Ensures that the client will close when you finish/error
